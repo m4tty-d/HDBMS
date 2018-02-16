@@ -116,3 +116,4 @@ BEGIN
   DBMS_OUTPUT.PUT_LINE((x_og * y_og) / x || '' a legkisebb közös többszörös'');
 END;/');
 END;
+
