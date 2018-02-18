@@ -95,8 +95,8 @@ BEGIN
     x := y;
     y := mod(temp, y);
   END LOOP;
-  DBMS_OUTPUT.PUT_LINE(x || ' a legnagyobb közös osztó');
-  DBMS_OUTPUT.PUT_LINE((x_og * y_og) / x || ' a legkisebb közös többszörös');
+  DBMS_OUTPUT.PUT_LINE(x_og || ' és ' || y_og || ' legnagyobb közös osztója: ' || x);
+  DBMS_OUTPUT.PUT_LINE(x_og || ' és ' || y_og || ' legkisebb közös többszöröse: ' || (x_og * y_og) / x);
 END;
 
 BEGIN
@@ -112,8 +112,19 @@ BEGIN
     x := y;
     y := mod(temp, y);
   END LOOP;
-  DBMS_OUTPUT.PUT_LINE(x || '' a legnagyobb közös osztó'');
-  DBMS_OUTPUT.PUT_LINE((x_og * y_og) / x || '' a legkisebb közös többszörös'');
+  DBMS_OUTPUT.PUT_LINE(x_og || '' és '' || y_og || '' legnagyobb közös osztója: '' || x);
+  DBMS_OUTPUT.PUT_LINE(x_og || '' és '' || y_og || '' legkisebb közös többszöröse: '' || (x_og * y_og) / x);
 END;/');
 END;
 
+DECLARE
+  x PLS_INTEGER := 0;
+BEGIN
+  LOOP
+    x := x + 1;
+    EXIT WHEN x = 2147483647;
+  END LOOP;
+  DBMS_OUTPUT.PUT_LINE(x);
+  -- DBMS_OUTPUT.PUT_LINE(x+1);
+  -- ORA-01426: numeric overflow
+END;
