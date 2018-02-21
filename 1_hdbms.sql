@@ -1,7 +1,7 @@
 -- 101.
 SELECT
   CUST_FIRST_NAME || ' ' || CUST_LAST_NAME AS Name,
-  to_char(DATE_OF_BIRTH, 'YYYY.MM.DD.')             AS "Date of birth"
+  to_char(DATE_OF_BIRTH, 'YYYY.MM.DD.')    AS "Date of birth"
 FROM OE.CUSTOMERS
 ORDER BY DATE_OF_BIRTH DESC, Name;
 
@@ -18,7 +18,7 @@ END;
 SELECT
   c.CUSTOMER_ID                                AS "ID",
   c.CUST_FIRST_NAME || ' ' || c.CUST_LAST_NAME AS Name,
-  to_char(max(o.order_date), 'YYYY.MM.DD.')             AS "Date"
+  to_char(max(o.order_date), 'YYYY.MM.DD.')    AS "Date"
 FROM OE.CUSTOMERS c
   LEFT JOIN OE.ORDERS o
     ON c.CUSTOMER_ID = o.CUSTOMER_ID
@@ -88,8 +88,8 @@ END;
 -- 105.
 SELECT
   o.ORDER_ID,
-  to_char(o.ORDER_DATE, 'YYYY.MM.DD. HH24:MM:SS')       AS "Order Date",
-  c.CUST_FIRST_NAME || ' ' || c.CUST_LAST_NAME AS "Customer Name"
+  to_char(o.ORDER_DATE, 'YYYY.MM.DD. HH24:MM:SS') AS "Order Date",
+  c.CUST_FIRST_NAME || ' ' || c.CUST_LAST_NAME    AS "Customer Name"
 FROM oe.ORDERS o
   JOIN oe.ORDER_ITEMS i
     ON o.ORDER_ID = i.ORDER_ID
