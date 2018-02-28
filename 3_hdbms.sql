@@ -145,18 +145,20 @@ END;
 DECLARE
   CURSOR c1 IS
     SELECT
-      c.CUSTOMER_ID C_ID,
-      sum(QUANTITY) SUM_QT
+      c.CUSTOMER_ID                                AS C_ID,
+      c.CUST_FIRST_NAME || ' ' || c.CUST_LAST_NAME AS Nev,
+      sum(QUANTITY)                                AS SUM_QT
     FROM oe.CUSTOMERS C
       JOIN oe.ORDERS o
         ON C.CUSTOMER_ID = o.CUSTOMER_ID
       JOIN oe.ORDER_ITEMS oi
         ON o.ORDER_ID = oi.ORDER_ID
-    GROUP BY C.CUSTOMER_ID, o.ORDER_ID;
+    GROUP BY C.CUSTOMER_ID, c.CUST_FIRST_NAME || ' ' || c.CUST_LAST_NAME;
 BEGIN
   FOR user_rec IN c1
   LOOP
-    DOPL('Azonosító: ' || user_rec.C_ID || ' Rendelt termékek száma: ' || user_rec.SUM_QT);
+    DOPL('Azonosító: ' || user_rec.C_ID || ', Név: ' || user_rec.Nev ||
+         ', Rendelt termékek száma: ' || user_rec.SUM_QT);
   END LOOP;
 END;
 
@@ -164,19 +166,21 @@ END;
 BEGIN
   HDBMS18.MEGOLDAS_FELTOLT(305, 'DECLARE
   CURSOR c1 IS
-  SELECT
-    c.CUSTOMER_ID C_ID,
-    sum(QUANTITY) SUM_QT
-  FROM oe.CUSTOMERS C
-    JOIN oe.ORDERS o
-      ON C.CUSTOMER_ID = o.CUSTOMER_ID
-    JOIN oe.ORDER_ITEMS oi
-      ON o.ORDER_ID = oi.ORDER_ID
-  GROUP BY C.CUSTOMER_ID, o.ORDER_ID;
+    SELECT
+      c.CUSTOMER_ID                                   C_ID,
+      c.CUST_FIRST_NAME || '' '' || c.CUST_LAST_NAME AS Nev,
+      sum(QUANTITY)                                   SUM_QT
+    FROM oe.CUSTOMERS C
+      JOIN oe.ORDERS o
+        ON C.CUSTOMER_ID = o.CUSTOMER_ID
+      JOIN oe.ORDER_ITEMS oi
+        ON o.ORDER_ID = oi.ORDER_ID
+    GROUP BY C.CUSTOMER_ID, c.CUST_FIRST_NAME || '' '' || c.CUST_LAST_NAME;
 BEGIN
-  FOR user_rec in c1
-    LOOP
-      DOPL(''Azonosító: '' || user_rec.C_ID || '' Rendelt termékek száma: '' || user_rec.SUM_QT);
+  FOR user_rec IN c1
+  LOOP
+    DOPL(''Azonosító: '' || user_rec.C_ID || '', Név: '' || user_rec.Nev ||
+         '', Rendelt termékek száma: '' || user_rec.SUM_QT);
   END LOOP;
 END;/');
 END;

@@ -4,27 +4,121 @@ SELECT
   HATARIDO,
   FELADAT
 FROM HDBMS18.FELADATAIM f
-  JOIN HDBMS18.MEGOLDASAIM m
-    ON f.AZON = m.FELADAT_AZON
+OUTER JOIN HDBMS18.MEGOLDASAIM m
+ON f.AZON = m.FELADAT_AZON
 WHERE m.JO = 'h' OR m.JO = '?'
 ORDER BY HATARIDO, AZON;
 
 -- 401.
+DECLARE
+  SUBTYPE ALTIPUS IS BINARY_INTEGER RANGE 10..99;
+  a1 ALTIPUS;
+  a2 ALTIPUS;
+BEGIN
+  a1 := 99;
+  --a2 := 1;
+END;
 
 
 BEGIN
-  HDBMS18.MEGOLDAS_FELTOLT(401, '/');
+  HDBMS18.MEGOLDAS_FELTOLT(401, 'DECLARE
+  SUBTYPE ALTIPUS IS BINARY_INTEGER RANGE 10..99;
+  a1 ALTIPUS;
+  a2 ALTIPUS;
+BEGIN
+  a1 := 99;
+  --a2 := 1;
+END;/');
 END;
 
 -- 402.
+DECLARE
+  CURSOR c1 IS
+    SELECT c.CUSTOMER_ID
+    FROM oe.CUSTOMERS c
+    WHERE lower(c.CUST_LAST_NAME) LIKE 't%' OR lower(c.CUST_FIRST_NAME) LIKE 't%';
+
+  CURSOR c2 IS
+    SELECT pi.PRODUCT_ID
+    FROM oe.PRODUCT_INFORMATION pi
+    WHERE pi.LIST_PRICE < 500;
+
+  FUNCTION
+    USER_PRODUCTS(u_id IN OE.ORDERS.customer_id%TYPE, p_id IN oe.ORDER_ITEMS.product_id%TYPE)
+    RETURN NUMBER IS
+    darab NUMBER(5);
+    BEGIN
+      SELECT sum(QUANTITY)
+      INTO darab
+      FROM oe.ORDERS o
+        JOIN OE.ORDER_ITEMS oi
+          ON o.ORDER_ID = oi.ORDER_ID
+      WHERE o.CUSTOMER_ID = u_id AND oi.PRODUCT_ID = p_id
+      RETURN darab;
+    END USER_PRODUCTS;
+BEGIN
+  FOR up IN c1 LOOP
+    FOR up1 IN c2 LOOP
+      DOPL('Customer ID: ' || up.CUSTOMER_ID || ' Product ID: ' || up1.PRODUCT_ID || ' Quantity: ' ||
+           USER_PRODUCTS(up.CUSTOMER_ID, up1.PRODUCT_ID));
+    END LOOP;
+  END LOOP;
+END;
 
 
 BEGIN
-  HDBMS18.MEGOLDAS_FELTOLT(402, '/');
+  HDBMS18.MEGOLDAS_FELTOLT(402, 'DECLARE
+  CURSOR c1 IS
+    SELECT
+      c.CUSTOMER_ID,
+      oi.PRODUCT_ID
+    FROM oe.CUSTOMERS c
+      JOIN oe.ORDERS o
+        ON c.CUSTOMER_ID = o.CUSTOMER_ID
+      JOIN oe.ORDER_ITEMS oi
+        ON o.ORDER_ID = oi.ORDER_ID
+      JOIN oe.PRODUCT_INFORMATION pi
+        ON oi.PRODUCT_ID = pi.PRODUCT_ID
+    WHERE lower(c.CUST_LAST_NAME) LIKE ''t%'' OR lower(c.CUST_FIRST_NAME) LIKE ''t%''
+      AND pi.LIST_PRICE < 500;
+
+  FUNCTION
+    USER_PRODUCTS(u_id IN OE.ORDERS.customer_id%TYPE, p_id IN oe.ORDER_ITEMS.product_id%TYPE)
+    RETURN NUMBER IS
+    darab NUMBER(5);
+    BEGIN
+      SELECT sum(QUANTITY)
+      INTO darab
+      FROM oe.ORDERS o
+        JOIN OE.ORDER_ITEMS oi
+          ON o.ORDER_ID = oi.ORDER_ID
+      WHERE o.CUSTOMER_ID = u_id AND oi.PRODUCT_ID = p_id
+      GROUP BY o.CUSTOMER_ID, oi.PRODUCT_ID;
+      RETURN darab;
+    END USER_PRODUCTS;
+BEGIN
+  FOR up IN c1 LOOP
+    DOPL(''Customer ID: '' || up.CUSTOMER_ID || '' Product ID: '' || up.PRODUCT_ID || '' Quantity: '' ||
+         USER_PRODUCTS(up.CUSTOMER_ID, up.PRODUCT_ID));
+  END LOOP;
+END;/');
 END;
 
 -- 403.
-
+DECLARE
+  TYPE PAIR IS RECORD (a NUMBER, b NUMBER);
+  PI CONSTANT NUMBER := 3.1415926535897932384626433832795028841;
+  FUNCTION sincos(n IN NUMBER)
+    RETURN PAIR IS
+    eredmeny PAIR;
+    BEGIN
+      eredmeny.a := sin(n);
+      eredmeny.b := cos(n);
+      RETURN eredmeny;
+    END sincos;
+BEGIN
+  DOPL(sincos(30).a || ' ' || sincos(30).b);
+END;
 
 BEGIN
   HDBMS18.MEGOLDAS_FELTOLT(403, '/');
