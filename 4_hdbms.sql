@@ -1,13 +1,16 @@
-SELECT
-  AZON,
-  JO,
-  HATARIDO,
-  FELADAT
-FROM HDBMS18.FELADATAIM f
-OUTER JOIN HDBMS18.MEGOLDASAIM m
-ON f.AZON = m.FELADAT_AZON
-WHERE m.JO = 'h' OR m.JO = '?'
-ORDER BY HATARIDO, AZON;
+CREATE OR REPLACE PROCEDURE F() IS
+  BEGIN
+    SELECT
+      f.AZON,
+      m.JO,
+      f.HATARIDO,
+      f.FELADAT
+    FROM HDBMS18.FELADATAIM f
+      LEFT JOIN HDBMS18.MEGOLDASAIM m
+        ON f.AZON = m.FELADAT_AZON
+    WHERE m.JO = '?' OR m.JO = 'n' OR m.JO IS NULL
+    ORDER BY f.HATARIDO, f.AZON;
+  END;
 
 -- 401.
 DECLARE
@@ -53,7 +56,7 @@ DECLARE
       FROM oe.ORDERS o
         JOIN OE.ORDER_ITEMS oi
           ON o.ORDER_ID = oi.ORDER_ID
-      WHERE o.CUSTOMER_ID = u_id AND oi.PRODUCT_ID = p_id
+      WHERE o.CUSTOMER_ID = u_id AND oi.PRODUCT_ID = p_id;
       RETURN darab;
     END USER_PRODUCTS;
 BEGIN
@@ -69,18 +72,14 @@ END;
 BEGIN
   HDBMS18.MEGOLDAS_FELTOLT(402, 'DECLARE
   CURSOR c1 IS
-    SELECT
-      c.CUSTOMER_ID,
-      oi.PRODUCT_ID
+    SELECT c.CUSTOMER_ID
     FROM oe.CUSTOMERS c
-      JOIN oe.ORDERS o
-        ON c.CUSTOMER_ID = o.CUSTOMER_ID
-      JOIN oe.ORDER_ITEMS oi
-        ON o.ORDER_ID = oi.ORDER_ID
-      JOIN oe.PRODUCT_INFORMATION pi
-        ON oi.PRODUCT_ID = pi.PRODUCT_ID
-    WHERE lower(c.CUST_LAST_NAME) LIKE ''t%'' OR lower(c.CUST_FIRST_NAME) LIKE ''t%''
-      AND pi.LIST_PRICE < 500;
+    WHERE lower(c.CUST_LAST_NAME) LIKE ''t%'' OR lower(c.CUST_FIRST_NAME) LIKE ''t%'';
+
+  CURSOR c2 IS
+    SELECT pi.PRODUCT_ID
+    FROM oe.PRODUCT_INFORMATION pi
+    WHERE pi.LIST_PRICE < 500;
 
   FUNCTION
     USER_PRODUCTS(u_id IN OE.ORDERS.customer_id%TYPE, p_id IN oe.ORDER_ITEMS.product_id%TYPE)
@@ -92,48 +91,186 @@ BEGIN
       FROM oe.ORDERS o
         JOIN OE.ORDER_ITEMS oi
           ON o.ORDER_ID = oi.ORDER_ID
-      WHERE o.CUSTOMER_ID = u_id AND oi.PRODUCT_ID = p_id
-      GROUP BY o.CUSTOMER_ID, oi.PRODUCT_ID;
+      WHERE o.CUSTOMER_ID = u_id AND oi.PRODUCT_ID = p_id;
       RETURN darab;
     END USER_PRODUCTS;
 BEGIN
   FOR up IN c1 LOOP
-    DOPL(''Customer ID: '' || up.CUSTOMER_ID || '' Product ID: '' || up.PRODUCT_ID || '' Quantity: '' ||
-         USER_PRODUCTS(up.CUSTOMER_ID, up.PRODUCT_ID));
+    FOR up1 IN c2 LOOP
+      DOPL(''Customer ID: '' || up.CUSTOMER_ID || '' Product ID: '' || up1.PRODUCT_ID || '' Quantity: '' ||
+           USER_PRODUCTS(up.CUSTOMER_ID, up1.PRODUCT_ID));
+    END LOOP;
   END LOOP;
 END;/');
 END;
 
 -- 403.
 DECLARE
-  TYPE PAIR IS RECORD (a NUMBER, b NUMBER);
-  PI CONSTANT NUMBER := 3.1415926535897932384626433832795028841;
-  FUNCTION sincos(n IN NUMBER)
+  n           NUMBER := 90;
+  TYPE PAIR IS RECORD (first NUMBER, second NUMBER);
+  PI CONSTANT NUMBER := 3.14159265359;
+  FUNCTION sincos(n IN BINARY_DOUBLE)
     RETURN PAIR IS
-    eredmeny PAIR;
+    eredmeny   PAIR;
+    nInDegrees NUMBER;
     BEGIN
-      eredmeny.a := sin(n);
-      eredmeny.b := cos(n);
+      nInDegrees := n * (PI / 180);
+      eredmeny.first := round(sin(nInDegrees), 3);
+      eredmeny.second := round(cos(nInDegrees), 3);
       RETURN eredmeny;
     END sincos;
 BEGIN
-  DOPL(sincos(30).a || ' ' || sincos(30).b);
+  FOR i IN 0..360 LOOP
+    IF MOD(i, 15) = 0
+    THEN
+      DOPL(i || ' ' || sincos(i).first || ' ' || sincos(i).second);
+    END IF;
+  END LOOP;
 END;
 
 BEGIN
-  HDBMS18.MEGOLDAS_FELTOLT(403, '/');
+  HDBMS18.MEGOLDAS_FELTOLT(403, 'DECLARE
+  n           NUMBER := 90;
+  TYPE PAIR IS RECORD (first NUMBER, second NUMBER);
+  PI CONSTANT NUMBER := 3.14159265359;
+  FUNCTION sincos(n IN BINARY_DOUBLE)
+    RETURN PAIR IS
+    eredmeny   PAIR;
+    nInDegrees NUMBER;
+    BEGIN
+      nInDegrees := n * (PI / 180);
+      eredmeny.first := round(sin(nInDegrees), 3);
+      eredmeny.second := round(cos(nInDegrees), 3);
+      RETURN eredmeny;
+    END sincos;
+BEGIN
+  FOR i IN 0..360 LOOP
+    IF MOD(i, 15) = 0
+    THEN
+      DOPL(i || '' '' || sincos(i).first || '' '' || sincos(i).second);
+    END IF;
+  END LOOP;
+END;/');
 END;
 
 -- 404.
+CREATE TABLE EMPLOYEES AS
+  SELECT *
+  FROM HR.EMPLOYEES;
+
+CREATE OR REPLACE PROCEDURE UPDATE_SALARY(emp_id IN HR.EMPLOYEES.EMPLOYEE_ID%TYPE, boost_Salary IN NUMBER) IS
+  employee HR.EMPLOYEES%ROWTYPE;
+  percent  NUMBER := 1 + (boost_Salary / 100);
+  BEGIN
+    UPDATE EMPLOYEES e
+    SET e.SALARY = e.SALARY * percent
+    WHERE e.EMPLOYEE_ID = emp_id;
+
+    SELECT *
+    INTO employee
+    FROM EMPLOYEES e
+    WHERE e.EMPLOYEE_ID = emp_id;
+
+    DOPL(employee.FIRST_NAME || ' ' || employee.LAST_NAME || ' ' || employee.SALARY);
+  END;
 
 
 BEGIN
-  HDBMS18.MEGOLDAS_FELTOLT(404, '/');
+  HDBMS18.MEGOLDAS_FELTOLT(404, 'CREATE OR REPLACE PROCEDURE UPDATE_SALARY(emp_id IN HR.EMPLOYEES.EMPLOYEE_ID%TYPE, boost_Salary IN NUMBER) IS
+  employee HR.EMPLOYEES%ROWTYPE;
+  percent NUMBER := 1 + (boost_Salary/100);
+  BEGIN
+    UPDATE EMPLOYEES e
+      SET e.SALARY = e.SALARY * percent
+      WHERE e.EMPLOYEE_ID = emp_id;
+
+    SELECT * INTO employee FROM EMPLOYEES e
+      WHERE e.EMPLOYEE_ID = emp_id;
+
+    DOPL(employee.FIRST_NAME || '' '' || employee.LAST_NAME || '' '' || employee.SALARY);
+  END;/');
 END;
 
 -- 405.
+BEGIN
+  --Steven King
+  UPDATE_SALARY(100, 50);
+
+  --Neena Kochahr
+  UPDATE_SALARY(101, -50);
+END;
+
+BEGIN
+  HDBMS18.MEGOLDAS_FELTOLT(405, '-- 405.
+BEGIN
+  --Steven King
+  UPDATE_SALARY(100, 50);
+
+  --Neena Kochahr
+  UPDATE_SALARY(101, -50);
+END;/');
+END;
+
+-- 406.
+CREATE OR REPLACE FUNCTION Births_in_month(month IN NUMBER)
+  RETURN NUMBER IS
+  honap_szam_kivetel EXCEPTION;
+  eredmeny NUMBER(3);
+  BEGIN
+    IF month < 1 OR month > 12 THEN
+      RAISE honap_szam_kivetel;
+    END IF;
+    SELECT count(*) INTO eredmeny
+    FROM OE.CUSTOMERS c
+    WHERE to_number(to_char(c.DATE_OF_BIRTH, 'MM')) = month;
+    RETURN eredmeny;
+    EXCEPTION
+      WHEN honap_szam_kivetel THEN
+        DOPL('A(z) ' || month || ' nem egy létező hónap száma. Adj meg 1-12 közötti értéket!');
+  END;
 
 
 BEGIN
-  HDBMS18.MEGOLDAS_FELTOLT(405, '/');
+  HDBMS18.MEGOLDAS_FELTOLT(406, 'CREATE OR REPLACE FUNCTION Births_in_month(month IN NUMBER)
+  RETURN NUMBER IS
+  honap_szam_kivetel EXCEPTION;
+  eredmeny NUMBER(3);
+  BEGIN
+    IF month < 1 OR month > 12 THEN
+      RAISE honap_szam_kivetel;
+    END IF;
+    SELECT count(*) INTO eredmeny
+    FROM OE.CUSTOMERS c
+    WHERE to_number(to_char(c.DATE_OF_BIRTH, ''MM'')) = month;
+    RETURN eredmeny;
+    EXCEPTION
+      WHEN honap_szam_kivetel THEN
+        DOPL(''A(z) '' || month || '' nem egy létező hónap száma. Adj meg 1-12 közötti értéket!'');
+  END;/');
 END;
+
+-- 407.
+SELECT BIRTHS_IN_MONTH(12) FROM dual;
+
+BEGIN
+  HDBMS18.MEGOLDAS_FELTOLT(407, 'SELECT BIRTHS_IN_MONTH(12) FROM dual;/');
+END;
+
+-- 408.
+BEGIN
+  DOPL(BIRTHS_IN_MONTH(12));
+END;
+
+BEGIN
+  HDBMS18.MEGOLDAS_FELTOLT(408, 'BEGIN
+  DOPL(BIRTHS_IN_MONTH(12));
+END;/');
+END;
+
+
+SELECT *
+FROM DICT
+WHERE TABLE_NAME LIKE 'V$%';
+
+SELECT *
+FROM V$XS_SESSION_ROLES;
