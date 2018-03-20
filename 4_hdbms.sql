@@ -1,4 +1,5 @@
-CREATE OR REPLACE PROCEDURE F() IS
+CREATE OR REPLACE PROCEDURE Feladatok() IS
+  c1 CURSOR;
   BEGIN
     SELECT
       f.AZON,
@@ -33,6 +34,8 @@ BEGIN
   --a2 := 1;
 END;/');
 END;
+
+
 
 -- 402.
 DECLARE
@@ -158,99 +161,122 @@ CREATE TABLE EMPLOYEES AS
   SELECT *
   FROM HR.EMPLOYEES;
 
-CREATE OR REPLACE PROCEDURE UPDATE_SALARY(emp_id IN HR.EMPLOYEES.EMPLOYEE_ID%TYPE, boost_Salary IN NUMBER) IS
-  employee HR.EMPLOYEES%ROWTYPE;
-  percent  NUMBER := 1 + (boost_Salary / 100);
+CREATE OR REPLACE PROCEDURE UPDATE_SALARY(emp_id   IN  EMPLOYEES.EMPLOYEE_ID%TYPE, boost_Salary IN NUMBER,
+                                          emp_name OUT VARCHAR2, emp_salary OUT NUMBER) IS
+  percent NUMBER := 1 + (boost_Salary / 100);
   BEGIN
     UPDATE EMPLOYEES e
     SET e.SALARY = e.SALARY * percent
-    WHERE e.EMPLOYEE_ID = emp_id;
-
-    SELECT *
-    INTO employee
-    FROM EMPLOYEES e
-    WHERE e.EMPLOYEE_ID = emp_id;
-
-    DOPL(employee.FIRST_NAME || ' ' || employee.LAST_NAME || ' ' || employee.SALARY);
+    WHERE e.EMPLOYEE_ID = emp_id
+    RETURNING e.LAST_NAME || ' ' || e.FIRST_NAME, e.SALARY INTO emp_name, emp_salary;
   END;
 
-
 BEGIN
-  HDBMS18.MEGOLDAS_FELTOLT(404, 'CREATE OR REPLACE PROCEDURE UPDATE_SALARY(emp_id IN HR.EMPLOYEES.EMPLOYEE_ID%TYPE, boost_Salary IN NUMBER) IS
-  employee HR.EMPLOYEES%ROWTYPE;
-  percent NUMBER := 1 + (boost_Salary/100);
+  HDBMS18.MEGOLDAS_FELTOLT(404, 'CREATE OR REPLACE PROCEDURE UPDATE_SALARY(emp_id   IN  EMPLOYEES.EMPLOYEE_ID%TYPE, boost_Salary IN NUMBER,
+                                          emp_name OUT VARCHAR2, emp_salary OUT NUMBER) IS
+  percent NUMBER := 1 + (boost_Salary / 100);
   BEGIN
     UPDATE EMPLOYEES e
-      SET e.SALARY = e.SALARY * percent
-      WHERE e.EMPLOYEE_ID = emp_id;
-
-    SELECT * INTO employee FROM EMPLOYEES e
-      WHERE e.EMPLOYEE_ID = emp_id;
-
-    DOPL(employee.FIRST_NAME || '' '' || employee.LAST_NAME || '' '' || employee.SALARY);
+    SET e.SALARY = e.SALARY * percent
+    WHERE e.EMPLOYEE_ID = emp_id
+    RETURNING e.LAST_NAME || '' '' || e.FIRST_NAME, e.SALARY INTO emp_name, emp_salary;
   END;/');
 END;
 
 -- 405.
+DECLARE
+  name   VARCHAR2(45);
+  salary NUMBER(8, 2);
+  id     NUMBER(6);
 BEGIN
-  --Steven King
-  UPDATE_SALARY(100, 50);
+  SELECT EMPLOYEE_ID
+  INTO ID
+  FROM EMPLOYEES
+  WHERE FIRST_NAME = 'Steven' AND LAST_NAME = 'King';
 
-  --Neena Kochahr
-  UPDATE_SALARY(101, -50);
+  UPDATE_SALARY(id, 50, name, salary);
+  DOPL(name || ' ' || salary);
+
+  SELECT EMPLOYEE_ID
+  INTO ID
+  FROM EMPLOYEES
+  WHERE FIRST_NAME = 'Neena' AND LAST_NAME = 'Kochhar';
+  UPDATE_SALARY(id, -50, name, salary);
+  DOPL(name || ' ' || salary);
 END;
 
-BEGIN
-  HDBMS18.MEGOLDAS_FELTOLT(405, '-- 405.
-BEGIN
-  --Steven King
-  UPDATE_SALARY(100, 50);
+CALL UPDATE_SALARY(100, 20);
 
-  --Neena Kochahr
-  UPDATE_SALARY(101, -50);
+BEGIN
+  HDBMS18.MEGOLDAS_FELTOLT(405, 'DECLARE
+  name   VARCHAR2(45);
+  salary NUMBER(8, 2);
+  id     NUMBER(6);
+BEGIN
+  SELECT EMPLOYEE_ID
+  INTO ID
+  FROM EMPLOYEES
+  WHERE FIRST_NAME = ''Steven'' AND LAST_NAME = ''King'';
+
+  UPDATE_SALARY(id, 50, name, salary);
+  DOPL(name || '' '' || salary);
+
+  SELECT EMPLOYEE_ID
+  INTO ID
+  FROM EMPLOYEES
+  WHERE FIRST_NAME = ''Neena'' AND LAST_NAME = ''Kochhar'';
+  UPDATE_SALARY(id, -50, name, salary);
+  DOPL(name || '' '' || salary);
 END;/');
 END;
 
 -- 406.
-CREATE OR REPLACE FUNCTION Births_in_month(month IN NUMBER)
+CREATE OR REPLACE FUNCTION Births_in_month(MONTH IN NUMBER)
   RETURN NUMBER IS
-  honap_szam_kivetel EXCEPTION;
+    honap_szam_kivetel EXCEPTION;
   eredmeny NUMBER(3);
   BEGIN
-    IF month < 1 OR month > 12 THEN
+    IF month < 1 OR month > 12
+    THEN
       RAISE honap_szam_kivetel;
     END IF;
-    SELECT count(*) INTO eredmeny
+    SELECT count(*)
+    INTO eredmeny
     FROM OE.CUSTOMERS c
     WHERE to_number(to_char(c.DATE_OF_BIRTH, 'MM')) = month;
     RETURN eredmeny;
     EXCEPTION
-      WHEN honap_szam_kivetel THEN
-        DOPL('A(z) ' || month || ' nem egy létező hónap száma. Adj meg 1-12 közötti értéket!');
+    WHEN honap_szam_kivetel
+    THEN
+      DOPL('A(z) ' || month || ' nem egy létező hónap száma. Adj meg 1-12 közötti értéket!');
   END;
 
 
 BEGIN
   HDBMS18.MEGOLDAS_FELTOLT(406, 'CREATE OR REPLACE FUNCTION Births_in_month(month IN NUMBER)
   RETURN NUMBER IS
-  honap_szam_kivetel EXCEPTION;
-  eredmeny NUMBER(3);
+    honap_szam_kivetel EXCEPTION;
+    eredmeny NUMBER(3);
   BEGIN
-    IF month < 1 OR month > 12 THEN
+    IF month < 1 OR month > 12
+    THEN
       RAISE honap_szam_kivetel;
     END IF;
-    SELECT count(*) INTO eredmeny
+    SELECT count(*)
+    INTO eredmeny
     FROM OE.CUSTOMERS c
     WHERE to_number(to_char(c.DATE_OF_BIRTH, ''MM'')) = month;
     RETURN eredmeny;
     EXCEPTION
-      WHEN honap_szam_kivetel THEN
-        DOPL(''A(z) '' || month || '' nem egy létező hónap száma. Adj meg 1-12 közötti értéket!'');
+    WHEN honap_szam_kivetel
+    THEN
+      DOPL(''A(z) '' || month || '' nem egy létező hónap száma. Adj meg 1-12 közötti értéket!'');
   END;/');
 END;
 
 -- 407.
-SELECT BIRTHS_IN_MONTH(12) FROM dual;
+SELECT BIRTHS_IN_MONTH(2)
+FROM dual;
 
 BEGIN
   HDBMS18.MEGOLDAS_FELTOLT(407, 'SELECT BIRTHS_IN_MONTH(12) FROM dual;/');
@@ -261,12 +287,14 @@ BEGIN
   DOPL(BIRTHS_IN_MONTH(12));
 END;
 
+
 BEGIN
   HDBMS18.MEGOLDAS_FELTOLT(408, 'BEGIN
   DOPL(BIRTHS_IN_MONTH(12));
 END;/');
 END;
 
+-----------------------------
 
 SELECT *
 FROM DICT
