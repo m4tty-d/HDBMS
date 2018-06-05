@@ -64,6 +64,9 @@ DECLARE
   v_eros c_eros;
   v_t    t_typ;
 
+    nincs_tobb_sor_exception EXCEPTION;
+  PRAGMA EXCEPTION_INIT (nincs_tobb_sor_exception, -20002);
+
 BEGIN
   BEGIN
     OPEN v_eros FOR SELECT
@@ -78,7 +81,7 @@ BEGIN
 
     cursor_ref_info(v_eros, v_t.szam, v_t.szoveg);
     DOPL(v_t.szam || ' ' || v_t.szoveg);
-    EXCEPTION WHEN INVALID_CURSOR
+    EXCEPTION WHEN nincs_tobb_sor_exception
     THEN
       DOPL('Nincs tobb sor.');
   END;
@@ -98,7 +101,7 @@ BEGIN
     cursor_ref_info(v_eros, v_t.szam, v_t.szoveg);
     DOPL(v_t.szam || ' ' || v_t.szoveg);
   END;
-  EXCEPTION WHEN INVALID_CURSOR
+  EXCEPTION WHEN nincs_tobb_sor_exception
   THEN
     DOPL('Nincs tobb sor.');
 
@@ -112,6 +115,9 @@ BEGIN
 
   v_eros c_eros;
   v_t    t_typ;
+
+  nincs_tobb_sor_exception EXCEPTION;
+  PRAGMA EXCEPTION_INIT(nincs_tobb_sor_exception, -20002);
 
 BEGIN
   BEGIN
@@ -127,7 +133,7 @@ BEGIN
 
     cursor_ref_info(v_eros, v_t.szam, v_t.szoveg);
     DOPL(v_t.szam || '' '' || v_t.szoveg);
-    EXCEPTION WHEN INVALID_CURSOR
+    EXCEPTION WHEN nincs_tobb_sor_exception
     THEN
       DOPL(''Nincs tobb sor.'');
   END;
@@ -147,7 +153,7 @@ BEGIN
     cursor_ref_info(v_eros, v_t.szam, v_t.szoveg);
     DOPL(v_t.szam || '' '' || v_t.szoveg);
   END;
-  EXCEPTION WHEN INVALID_CURSOR
+  EXCEPTION WHEN nincs_tobb_sor_exception
   THEN
     DOPL(''Nincs tobb sor.'');
 
@@ -291,6 +297,7 @@ DECLARE
 
   szohossz   NUMBER;
   betu       VARCHAR2(1);
+  i          varchar2(50);
 BEGIN
   FOR c IN (SELECT nev
             FROM gyumolcsok) LOOP
@@ -308,8 +315,15 @@ BEGIN
       END IF;
     END LOOP;
   END LOOP;
-END;
 
+  i := v_betuStat.FIRST;
+
+  WHILE i IS NOT NULL
+  LOOP
+    DOPL(i || ' ' || v_betuStat(i));
+    i := v_betuStat.NEXT(i);
+  END LOOP;
+END;
 
 BEGIN
   HDBMS18.MEGOLDAS_FELTOLT(805, 'DECLARE
@@ -320,6 +334,7 @@ BEGIN
 
   szohossz   NUMBER;
   betu       VARCHAR2(1);
+  i          varchar2(50);
 BEGIN
   FOR c IN (SELECT nev
             FROM gyumolcsok) LOOP
@@ -337,48 +352,53 @@ BEGIN
       END IF;
     END LOOP;
   END LOOP;
+
+  i := v_betuStat.FIRST;
+
+  WHILE i IS NOT NULL
+  LOOP
+    DOPL(i || '' '' || v_betuStat(i));
+    i := v_betuStat.NEXT(i);
+  END LOOP;
 END;/');
 END;
 
 -- 806.
 CREATE OR REPLACE PACKAGE table_manager AS
-  PROCEDURE felvesz(id IN NUMBER, ertek IN VARCHAR2);
-  PROCEDURE torol(id IN NUMBER);
-  PROCEDURE tobbet_torol(id IN NUMBER);
+  PROCEDURE felvesz(id IN PLS_INTEGER, ertek IN VARCHAR2);
+  PROCEDURE torol(id IN PLS_INTEGER);
+  PROCEDURE tobbet_torol(id1 IN PLS_INTEGER, id2 IN PLS_INTEGER);
 
   PROCEDURE kiir;
 
   FUNCTION elemszam
     RETURN NUMBER;
-  FUNCTION getErtek(id IN NUMBER)
+  FUNCTION getErtek(id IN PLS_INTEGER)
     RETURN VARCHAR2;
 
-  PROCEDURE modosit(id IN NUMBER, ertek IN VARCHAR2);
+  PROCEDURE modosit(id IN PLS_INTEGER, ertek IN VARCHAR2);
 
 END table_manager;
 
 
 CREATE OR REPLACE PACKAGE BODY TABLE_MANAGER AS
 
-  TYPE tabla IS TABLE OF VARCHAR2(50);
-  v_tabla tabla := tabla();
+  TYPE tabla IS TABLE OF VARCHAR2(50) INDEX BY PLS_INTEGER;
+  v_tabla tabla;
 
-  PROCEDURE felvesz(id IN NUMBER, ertek IN VARCHAR2) IS
+  PROCEDURE felvesz(id IN PLS_INTEGER, ertek IN VARCHAR2) IS
     BEGIN
-      v_tabla.extend(1);
       v_tabla(id) := ertek;
     END felvesz;
 
-  PROCEDURE torol(id IN NUMBER) IS
+  PROCEDURE torol(id IN PLS_INTEGER) IS
     BEGIN
       v_tabla.DELETE(id);
     END torol;
 
-  PROCEDURE tobbet_torol(id IN NUMBER) IS
+  PROCEDURE tobbet_torol(id1 IN PLS_INTEGER, id2 IN PLS_INTEGER) IS
     BEGIN
-      v_tabla.DELETE(id);
-      v_tabla.DELETE(id + 1);
-      v_tabla.DELETE(id + 2);
+      v_tabla.DELETE(id1, id2);
     END tobbet_torol;
 
   PROCEDURE kiir IS
@@ -398,7 +418,7 @@ CREATE OR REPLACE PACKAGE BODY TABLE_MANAGER AS
       RETURN v_tabla.COUNT;
     END elemszam;
 
-  FUNCTION getErtek(id IN NUMBER)
+  FUNCTION getErtek(id IN PLS_INTEGER)
     RETURN VARCHAR2 IS
     BEGIN
       IF v_tabla.EXISTS(id)
@@ -409,58 +429,49 @@ CREATE OR REPLACE PACKAGE BODY TABLE_MANAGER AS
       END IF;
     END getErtek;
 
-  PROCEDURE modosit(id IN NUMBER, ertek IN VARCHAR2) IS
+  PROCEDURE modosit(id IN PLS_INTEGER, ertek IN VARCHAR2) IS
     BEGIN
-      IF v_tabla.EXISTS(id)
-      THEN
-        v_tabla(id) := ertek;
-      ELSE
-        v_tabla.extend(1);
-        v_tabla(id) := ertek;
-      END IF;
+      v_tabla(id) := ertek;
     END modosit;
 
 END TABLE_MANAGER;
 
 BEGIN
   HDBMS18.MEGOLDAS_FELTOLT(806, 'CREATE OR REPLACE PACKAGE table_manager AS
-  PROCEDURE felvesz(id IN NUMBER, ertek IN VARCHAR2);
-  PROCEDURE torol(id IN NUMBER);
-  PROCEDURE tobbet_torol(id IN NUMBER);
+  PROCEDURE felvesz(id IN PLS_INTEGER, ertek IN VARCHAR2);
+  PROCEDURE torol(id IN PLS_INTEGER);
+  PROCEDURE tobbet_torol(id1 IN PLS_INTEGER, id2 IN PLS_INTEGER);
 
   PROCEDURE kiir;
 
   FUNCTION elemszam
     RETURN NUMBER;
-  FUNCTION getErtek(id IN NUMBER)
+  FUNCTION getErtek(id IN PLS_INTEGER)
     RETURN VARCHAR2;
 
-  PROCEDURE modosit(id IN NUMBER, ertek IN VARCHAR2);
+  PROCEDURE modosit(id IN PLS_INTEGER, ertek IN VARCHAR2);
 
 END table_manager;
 /
 
 CREATE OR REPLACE PACKAGE BODY TABLE_MANAGER AS
 
-  TYPE tabla IS TABLE OF VARCHAR2(50);
-  v_tabla tabla := tabla();
+  TYPE tabla IS TABLE OF VARCHAR2(50) INDEX BY PLS_INTEGER;
+  v_tabla tabla;
 
-  PROCEDURE felvesz(id IN NUMBER, ertek IN VARCHAR2) IS
+  PROCEDURE felvesz(id IN PLS_INTEGER, ertek IN VARCHAR2) IS
     BEGIN
-      v_tabla.extend(1);
       v_tabla(id) := ertek;
     END felvesz;
 
-  PROCEDURE torol(id IN NUMBER) IS
+  PROCEDURE torol(id IN PLS_INTEGER) IS
     BEGIN
       v_tabla.DELETE(id);
     END torol;
 
-  PROCEDURE tobbet_torol(id IN NUMBER) IS
+  PROCEDURE tobbet_torol(id1 IN PLS_INTEGER, id2 IN PLS_INTEGER) IS
     BEGIN
-      v_tabla.DELETE(id);
-      v_tabla.DELETE(id + 1);
-      v_tabla.DELETE(id + 2);
+      v_tabla.DELETE(id1, id2);
     END tobbet_torol;
 
   PROCEDURE kiir IS
@@ -480,7 +491,7 @@ CREATE OR REPLACE PACKAGE BODY TABLE_MANAGER AS
       RETURN v_tabla.COUNT;
     END elemszam;
 
-  FUNCTION getErtek(id IN NUMBER)
+  FUNCTION getErtek(id IN PLS_INTEGER)
     RETURN VARCHAR2 IS
     BEGIN
       IF v_tabla.EXISTS(id)
@@ -491,15 +502,9 @@ CREATE OR REPLACE PACKAGE BODY TABLE_MANAGER AS
       END IF;
     END getErtek;
 
-  PROCEDURE modosit(id IN NUMBER, ertek IN VARCHAR2) IS
+  PROCEDURE modosit(id IN PLS_INTEGER, ertek IN VARCHAR2) IS
     BEGIN
-      IF v_tabla.EXISTS(id)
-      THEN
-        v_tabla(id) := ertek;
-      ELSE
-        v_tabla.extend(1);
-        v_tabla(id) := ertek;
-      END IF;
+      v_tabla(id) := ertek;
     END modosit;
 
 END TABLE_MANAGER;/');
@@ -524,7 +529,7 @@ BEGIN
   DOPL(TABLE_MANAGER.ELEMSZAM());
   TABLE_MANAGER.KIIR();
 
-  TABLE_MANAGER.TOBBET_TOROL(2);
+  TABLE_MANAGER.TOBBET_TOROL(2, 3);
 
   DOPL(TABLE_MANAGER.ELEMSZAM());
   TABLE_MANAGER.KIIR();
@@ -549,7 +554,7 @@ BEGIN
   DOPL(TABLE_MANAGER.ELEMSZAM());
   TABLE_MANAGER.KIIR();
 
-  TABLE_MANAGER.TOBBET_TOROL(2);
+  TABLE_MANAGER.TOBBET_TOROL(2, 3);
 
   DOPL(TABLE_MANAGER.ELEMSZAM());
   TABLE_MANAGER.KIIR();

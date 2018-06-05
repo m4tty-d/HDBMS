@@ -1,5 +1,3 @@
--- noinspection SqlResolveForFile
-
 SELECT
   f.AZON,
   m.JO,
@@ -12,22 +10,20 @@ WHERE m.JO = '?' OR m.JO = 'n' OR m.JO IS NULL
 ORDER BY f.HATARIDO, f.AZON;
 
 
-SELECT
-
-  --701.
-  DECLARE
-    TYPE PRODUCT_INFO_TYP IS RECORD
-(p_name OE.PRODUCTS.PRODUCT_NAME% TYPE,
-quantity OE.INVENTORIES.QUANTITY_ON_HAND% TYPE );
-CURSOR c1 IS
-SELECT
-  p.PRODUCT_NAME,
-  i.QUANTITY_ON_HAND
-FROM OE.PRODUCTS p
-  JOIN OE.INVENTORIES i
-    ON p.PRODUCT_ID = i.PRODUCT_ID
-WHERE WAREHOUSE_ID = 8;
-p_info PRODUCT_INFO_TYP;
+--701.
+DECLARE
+  TYPE PRODUCT_INFO_TYP IS RECORD
+  (p_name OE.PRODUCTS.PRODUCT_NAME%TYPE,
+    quantity OE.INVENTORIES.QUANTITY_ON_HAND%TYPE );
+  CURSOR c1 IS
+    SELECT
+      p.PRODUCT_NAME,
+      i.QUANTITY_ON_HAND
+    FROM OE.PRODUCTS p
+      JOIN OE.INVENTORIES i
+        ON p.PRODUCT_ID = i.PRODUCT_ID
+    WHERE WAREHOUSE_ID = 8;
+  p_info PRODUCT_INFO_TYP;
 BEGIN
   OPEN c1;
   LOOP
@@ -239,13 +235,7 @@ CREATE OR REPLACE PACKAGE BODY BOOK_MANAGER AS
     kiadas_eve   DATE,
     raktari_szam VARCHAR2)
   IS
-    v_c1           KONYVEK%ROWTYPE;
-    volt_exception BOOLEAN := FALSE;
-    CURSOR c1 (ISBN_in IN VARCHAR2) IS
-      SELECT *
-      FROM KONYVEK
-      WHERE ISBN = ISBN_in;
-
+    v_c1 KONYVEK%ROWTYPE;
     BEGIN
       BEGIN
         INSERT INTO KONYVEK
@@ -258,26 +248,24 @@ CREATE OR REPLACE PACKAGE BODY BOOK_MANAGER AS
         EXCEPTION
         WHEN DUP_VAL_ON_INDEX
         THEN
-          volt_exception := TRUE;
-          OPEN c1(ISBN);
-          FETCH c1 INTO v_c1;
+          SELECT *
+          INTO v_c1
+          FROM KONYVEK
+          WHERE ISBN = ISBN;
+
           IF (v_c1.cim = cim AND v_c1.kiado = kiado AND v_c1.kiadas_eve = kiadas_eve)
           THEN
             DOPL('örülünk');
-            CLOSE c1;
           ELSE
             raise BOOK_MANAGER.nem_megfelelo_konyv;
           END IF;
       END;
 
       BEGIN
-        IF (NOT volt_exception)
-        THEN
-          INSERT INTO PELDANY
-          (ISBN, RAKTARI_SZAM)
-          VALUES
-            (ISBN, raktari_szam);
-        END IF;
+        INSERT INTO PELDANY
+        (ISBN, RAKTARI_SZAM)
+        VALUES
+          (ISBN, raktari_szam);
         EXCEPTION
         WHEN DUP_VAL_ON_INDEX
         THEN
@@ -368,13 +356,7 @@ CREATE OR REPLACE PACKAGE BODY BOOK_MANAGER AS
     kiadas_eve   DATE,
     raktari_szam VARCHAR2)
   IS
-    v_c1           KONYVEK%ROWTYPE;
-    volt_exception BOOLEAN := FALSE;
-    CURSOR c1 (ISBN_in IN VARCHAR2) IS
-      SELECT *
-      FROM KONYVEK
-      WHERE ISBN = ISBN_in;
-
+    v_c1 KONYVEK%ROWTYPE;
     BEGIN
       BEGIN
         INSERT INTO KONYVEK
@@ -387,26 +369,24 @@ CREATE OR REPLACE PACKAGE BODY BOOK_MANAGER AS
         EXCEPTION
         WHEN DUP_VAL_ON_INDEX
         THEN
-          volt_exception := TRUE;
-          OPEN c1(ISBN);
-          FETCH c1 INTO v_c1;
+          SELECT *
+          INTO v_c1
+          FROM KONYVEK
+          WHERE ISBN = ISBN;
+
           IF (v_c1.cim = cim AND v_c1.kiado = kiado AND v_c1.kiadas_eve = kiadas_eve)
           THEN
             DOPL(''örülünk'');
-            CLOSE c1;
           ELSE
             raise BOOK_MANAGER.nem_megfelelo_konyv;
           END IF;
       END;
 
       BEGIN
-        IF (NOT volt_exception)
-        THEN
-          INSERT INTO PELDANY
-          (ISBN, RAKTARI_SZAM)
-          VALUES
-            (ISBN, raktari_szam);
-        END IF;
+        INSERT INTO PELDANY
+        (ISBN, RAKTARI_SZAM)
+        VALUES
+          (ISBN, raktari_szam);
         EXCEPTION
         WHEN DUP_VAL_ON_INDEX
         THEN

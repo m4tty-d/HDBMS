@@ -282,38 +282,11 @@ VALUES (101010, 'Montgomery', 'Montgomery', NULL, NULL, 'us', 'AMERICA',
                 100.00, 'montgomery@montgomery.com', 145, NULL, NULL, 'özvegy', 'M',
         'B: 30,000 - 49,999');
 
-
-
-
-
-
-
-
-/
-
 DELETE FROM CUSTOMERS
 WHERE CUSTOMER_ID = 1000;
 
-
-
-
-
-
-
-
-/
-
 DELETE FROM PRODUCT_DESCRIPTIONS
 WHERE PRODUCT_ID = 1799;
-
-
-
-
-
-
-
-
-/
 
 INSERT INTO PRODUCT_DESCRIPTIONS
 (PRODUCT_ID,
